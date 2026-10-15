@@ -58,4 +58,58 @@ describe("POST /api/register", () => {
     const body = await res.json();
     expect(body).toEqual({ error: "Email sudah terdaftar" });
   });
+
+  it("harus mengembalikan error 400 jika name lebih dari 255 karakter", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "A".repeat(300),
+          email: "longname@test.com",
+          password: "password123",
+        }),
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body).toHaveProperty("error");
+  });
+
+  it("harus mengembalikan error 400 jika email lebih dari 255 karakter", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Test User",
+          email: "a".repeat(250) + "@test.com",
+          password: "password123",
+        }),
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body).toHaveProperty("error");
+  });
+
+  it("harus mengembalikan error 400 jika password lebih dari 128 karakter", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Test User",
+          email: "test@test.com",
+          password: "p".repeat(200),
+        }),
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as any;
+    expect(body).toHaveProperty("error");
+  });
 });
