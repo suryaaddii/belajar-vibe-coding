@@ -24,6 +24,14 @@ export interface LoginUserInput {
 }
 
 export async function registerUser(input: RegisterUserInput) {
+  // Validasi panjang input (defense in depth)
+  if (input.name.length > 255) {
+    throw new UserError("Nama tidak boleh lebih dari 255 karakter", 400);
+  }
+  if (input.email.length > 255) {
+    throw new UserError("Email tidak boleh lebih dari 255 karakter", 400);
+  }
+
   // 1. Cek apakah email sudah terdaftar
   const existingUsers = await db
     .select({ id: users.id })
