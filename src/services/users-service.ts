@@ -118,3 +118,25 @@ export async function getCurrentUser(token: string) {
 
   return user;
 }
+
+export async function logoutUser(token: string) {
+  if (!token || typeof token !== "string" || token.trim() === "") {
+    throw new UserError("Unauthorized", 401);
+  }
+
+  // 1. Cek keberadaan session berdasarkan token
+  const foundSessions = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(eq(sessions.token, token.trim()))
+    .limit(1);
+
+  if (foundSessions.length === 0) {
+    throw new UserError("Unauthorized", 401);
+  }
+
+  // 2. Hapus session dari tabel database
+  await db.delete(sessions).where(eq(sessions.token, token.trim()));
+
+  return { success: true };
+}

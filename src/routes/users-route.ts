@@ -3,6 +3,7 @@ import {
   registerUser,
   loginUser,
   getCurrentUser,
+  logoutUser,
   UserError,
 } from "../services/users-service";
 
@@ -76,6 +77,47 @@ const currentUserHandler = async ({ headers, set }: any) => {
   }
 };
 
+const logoutHandler = async ({ headers, set }: any) => {
+  const authHeader = headers["authorization"] || headers["Authorization"];
+  if (!authHeader || typeof authHeader !== "string") {
+    set.status = 401;
+    return {
+      error: "Unauthorized",
+    };
+  }
+
+  // Support both "Bearer <token>" and "Bearer<token>"
+  const match = authHeader.match(/^Bearer\s*(.+)$/i);
+  if (!match || !match[1] || match[1].trim() === "") {
+    set.status = 401;
+    return {
+      error: "Unauthorized",
+    };
+  }
+
+  const token = match[1].trim();
+
+  try {
+    await logoutUser(token);
+    set.status = 200;
+    return {
+      data: "OK",
+    };
+  } catch (err: any) {
+    if (err instanceof UserError) {
+      set.status = err.status;
+      return {
+        error: err.message,
+      };
+    }
+
+    set.status = 500;
+    return {
+      error: err?.message || "Internal server error",
+    };
+  }
+};
+
 export const usersRoute = new Elysia()
   .onError(({ code, error, set }) => {
     if (code === "VALIDATION") {
@@ -119,4 +161,6 @@ export const usersRoute = new Elysia()
   .post("/users/login", loginHandler, loginSchema)
   .post("/login", loginHandler, loginSchema)
   .get("/users/current", currentUserHandler)
-  .get("/current", currentUserHandler);
+  .get("/current", currentUserHandler)
+  .delete("/users/logout", logoutHandler)
+  .delete("/logout", logoutHandler);
