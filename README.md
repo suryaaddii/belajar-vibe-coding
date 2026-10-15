@@ -99,5 +99,5 @@ DATABASE_NAME=belajar_vibe_coding
 | :--- | :--- | :--- |
 | `GET` | `/` | API status & welcome message |
 | `GET` | `/health` | Health check & system uptime |
-| `GET` | `/users` | Mengambil seluruh daftar user dari database |
-| `POST` | `/users` | Menambahkan user baru ke database (`{ "name": string, "email": string }`) |
+| `POST` | `/api/register` | Registrasi user baru (`name`, `email`, `password`) |
+| `POST` | `/api/users/login` | Login user & generate session token (`email`, `password`) |
