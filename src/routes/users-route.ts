@@ -1,5 +1,34 @@
 import { Elysia, t } from "elysia";
-import { registerUser, UserError } from "../services/users-service";
+import { registerUser, loginUser, UserError } from "../services/users-service";
+
+const loginHandler = async ({ body, set }: any) => {
+  try {
+    const result = await loginUser(body);
+    set.status = 200;
+    return {
+      data: result.token,
+    };
+  } catch (err: any) {
+    if (err instanceof UserError) {
+      set.status = err.status;
+      return {
+        error: err.message,
+      };
+    }
+
+    set.status = 500;
+    return {
+      error: err?.message || "Internal server error",
+    };
+  }
+};
+
+const loginSchema = {
+  body: t.Object({
+    email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+$" }),
+    password: t.String({ minLength: 1 }),
+  }),
+};
 
 export const usersRoute = new Elysia()
   .onError(({ code, error, set }) => {
@@ -40,4 +69,6 @@ export const usersRoute = new Elysia()
         password: t.String({ minLength: 1 }),
       }),
     }
-  );
+  )
+  .post("/users/login", loginHandler, loginSchema)
+  .post("/login", loginHandler, loginSchema);
