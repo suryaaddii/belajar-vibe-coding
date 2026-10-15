@@ -101,3 +101,4 @@ DATABASE_NAME=belajar_vibe_coding
 | `GET` | `/health` | Health check & system uptime |
 | `POST` | `/api/register` | Registrasi user baru (`name`, `email`, `password`) |
 | `POST` | `/api/users/login` | Login user & generate session token (`email`, `password`) |
+| `GET` | `/api/users/current` | Mengambil data user yang sedang login (`Authorization: Bearer <token>`) |
