@@ -1,5 +1,10 @@
 import { Elysia, t } from "elysia";
-import { registerUser, loginUser, UserError } from "../services/users-service";
+import {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  UserError,
+} from "../services/users-service";
 
 const loginHandler = async ({ body, set }: any) => {
   try {
@@ -28,6 +33,47 @@ const loginSchema = {
     email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+$" }),
     password: t.String({ minLength: 1 }),
   }),
+};
+
+const currentUserHandler = async ({ headers, set }: any) => {
+  const authHeader = headers["authorization"] || headers["Authorization"];
+  if (!authHeader || typeof authHeader !== "string") {
+    set.status = 401;
+    return {
+      error: "Unauthorized",
+    };
+  }
+
+  // Support both "Bearer <token>" and "Bearer<token>"
+  const match = authHeader.match(/^Bearer\s*(.+)$/i);
+  if (!match || !match[1] || match[1].trim() === "") {
+    set.status = 401;
+    return {
+      error: "Unauthorized",
+    };
+  }
+
+  const token = match[1].trim();
+
+  try {
+    const user = await getCurrentUser(token);
+    set.status = 200;
+    return {
+      data: user,
+    };
+  } catch (err: any) {
+    if (err instanceof UserError) {
+      set.status = err.status;
+      return {
+        error: err.message,
+      };
+    }
+
+    set.status = 500;
+    return {
+      error: err?.message || "Internal server error",
+    };
+  }
 };
 
 export const usersRoute = new Elysia()
@@ -71,4 +117,6 @@ export const usersRoute = new Elysia()
     }
   )
   .post("/users/login", loginHandler, loginSchema)
-  .post("/login", loginHandler, loginSchema);
+  .post("/login", loginHandler, loginSchema)
+  .get("/users/current", currentUserHandler)
+  .get("/current", currentUserHandler);

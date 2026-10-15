@@ -81,3 +81,40 @@ export async function loginUser(input: LoginUserInput) {
 
   return { token };
 }
+
+export async function getCurrentUser(token: string) {
+  if (!token || typeof token !== "string" || token.trim() === "") {
+    throw new UserError("Unauthorized", 401);
+  }
+
+  // 1. Cari session berdasarkan token
+  const foundSessions = await db
+    .select()
+    .from(sessions)
+    .where(eq(sessions.token, token.trim()))
+    .limit(1);
+
+  const session = foundSessions[0];
+  if (!session) {
+    throw new UserError("Unauthorized", 401);
+  }
+
+  // 2. Ambil data user yang berelasi dengan session (tanpa kolom password)
+  const foundUsers = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      created_at: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
+
+  const user = foundUsers[0];
+  if (!user) {
+    throw new UserError("Unauthorized", 401);
+  }
+
+  return user;
+}
